@@ -1,0 +1,188 @@
+package hibernate;
+
+
+
+import myhibernate.HibernateConfig;
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * Created by newuser on 3/1/16.
+ */
+public class HRunner {
+    private List<Player> players;
+    private HConfig theHU;
+
+    public HRunner(){
+        theHU = new HConfig();
+    }
+
+    public static void main(String[] args) {
+
+
+        HRunner commands = new HRunner();
+
+        commands.addNewPlayers();
+        commands.showAllPlayers();
+        commands.modifyPlayer();
+        commands.addSharedTeams();
+        commands.deletePlayers();
+
+    }
+
+
+
+    private void addNewPlayers() {
+        Session session = theHU.getCurrentSession();
+        /*
+         * all database interactions in Hibernate are required to be inside a transaction.
+         */
+        Transaction transaction = session.beginTransaction();
+        /*
+         * create some User instances.
+         */
+        Player messi = new Player();
+        messi.setPlayerName("Messi");
+        messi.setJerseyNumber(10);
+        messi.setPlayerPosition("Forward");
+
+        Player ronaldo = new Player();
+        ronaldo.setPlayerName("Ronaldo");
+        ronaldo.setPlayerPosition("Forward");
+        ronaldo.setJerseyNumber(7);
+
+        Player suarez = new Player();
+        suarez.setPlayerName("Suarez");
+        suarez.setJerseyNumber(9);
+        suarez.setPlayerPosition("Forward");
+        /*
+         * save each instance as a record in the database
+         */
+        session.save(messi);
+        session.save(ronaldo);
+        session.save(suarez);
+        transaction.commit();
+        /*
+         * prove that the User instances were added to the database and that
+         * the instances were each updated with a database generated id.
+         */
+        System.out.println("Messi's generated ID is: " + messi.getId());
+        System.out.println("Ronaldo's generated ID is: " + ronaldo.getId());
+        System.out.println("Suarez's generated ID is: " + suarez.getId());
+    }
+
+    private void showAllPlayers() {
+        Session session = theHU.getCurrentSession();
+        Transaction transaction = session.beginTransaction();
+        /*
+         * execute a HQL query against the database.  HQL is NOT SQL.  It is object based.
+         */
+        Query allPlayersQuery = session.createQuery("select p from Player as p order by p.id");
+        /*
+         * get a list of User instances based on what was found in the database tables.
+         */
+        players = allPlayersQuery.list();
+        //System.out.println("Total Number of Players: "+players.size());
+        /*
+         * iterate over each User instance returned by the query and found in the list.
+         */
+        Iterator<Player> iter = players.iterator();;
+        while(iter.hasNext()) {
+            Player element = iter.next();
+            System.out.println(element.toString());
+
+            //System.out.println("num of teams: "+element.getTeams().size());
+        }
+        transaction.commit();
+    }
+
+    /*
+  * show how to modify a database record
+  */
+    private void modifyPlayer() {
+
+        Session session = theHU.getCurrentSession();
+        Transaction transaction = session.beginTransaction();
+        /*
+         * get a single User instance from the database.
+         */
+        Query singlePlayerQuery = session.createQuery("select p from Player as p where p.playerName='Ronaldo'");
+        Player ronaldo = (Player)singlePlayerQuery.uniqueResult();
+        /*
+         * change the user name for the Java instance
+         */
+        ronaldo.setPlayerName("Ronaldo Portugal");
+        /*
+         * call the session merge method for the User instance in question.  This tells the database that the instance is ready to be permanently stored.
+         */
+        session.merge(ronaldo);
+
+        /*
+         * call the transaction commit method.  This tells the database that the changes are ready to be permanently stored.
+         */
+        transaction.commit();
+        /*
+         * permanently store the changes into the database tables.
+         */
+        showAllPlayers();
+    }
+
+    private void addSharedTeams() {
+        Session session = theHU.getCurrentSession();
+        Transaction transaction = session.beginTransaction();
+
+        Query messiQuery = session.createQuery("select p from Player as p where p.playerName='Messi'");
+        Player messi = (Player)messiQuery.uniqueResult();
+
+        Query suarezQuery = session.createQuery("select p from Player as p where p.playerName='Suarez'");
+        Player suarez = (Player)suarezQuery.uniqueResult();
+
+
+
+        Team sharedTeam = new Team();
+        sharedTeam.setTeamName("Barcelona");
+
+
+
+        Set<Team> messiTeams = messi.getTeams();
+        messiTeams.add(sharedTeam);
+
+        Set<Team> suarezTeams = suarez.getTeams();
+        suarezTeams.add(sharedTeam);
+
+
+        session.save(sharedTeam);
+
+
+        session.merge(messi);
+        session.merge(suarez);
+
+        transaction.commit();
+
+
+        showAllPlayers();
+    }
+
+    private void deletePlayers() {
+        Session session = theHU.getCurrentSession();
+        Transaction transaction = session.beginTransaction();
+
+        int numPlayers = players.size();
+        System.out.println("Player count: " + numPlayers);
+        for(int i = 0; i < numPlayers; i++){
+            System.out.println("deleting user "+ players.get(i).getPlayerName());
+            session.delete(players.get(i));
+        }
+        transaction.commit();
+
+        System.out.println(players);
+        players.clear();
+
+        System.out.println(players);
+    }
+}
