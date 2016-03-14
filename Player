@@ -1,0 +1,87 @@
+package hibernate;
+
+import javax.persistence.*;
+
+import java.util.Set;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.GeneratedValue;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.Table;
+/**
+ * Created by newuser on 3/1/16.
+ */
+@Entity
+@Table(name = "app_player")
+public class Player {
+
+    @Id
+    @GeneratedValue
+    private Integer id;
+    private String playerName;
+    private String playerPosition;
+    private int jerseyNumber;
+    
+
+    @ManyToMany(cascade = CascadeType.ALL)
+    @JoinTable(
+            name = "player_team",
+            joinColumns = {@JoinColumn(name = "player_id")},
+            inverseJoinColumns = @JoinColumn(name = "team_id")
+    )
+    private Set<Team> teams;
+
+    public Player() {
+
+    }
+
+    public Set<Team> getTeams() {
+        return teams;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getPlayerName() {
+        return playerName;
+    }
+
+    public void setPlayerName(String playerName) {
+        this.playerName = playerName;
+    }
+
+    public String getPlayerPosition() {
+        return playerPosition;
+    }
+
+    public void setPlayerPosition(String playerPosition) {
+        this.playerPosition = playerPosition;
+    }
+
+    public int getJerseyNumber() {
+        return jerseyNumber;
+    }
+
+    public void setJerseyNumber(int jerseyNumber) {
+        this.jerseyNumber = jerseyNumber;
+    }
+
+    @Override
+    public String toString() {
+        return "Player{" +
+                "id=" + id +
+                ", playerName='" + playerName + '\'' +
+                ", playerPosition='" + playerPosition + '\'' +
+                ", jerseyNumber=" + jerseyNumber +
+                ", teams=" + teams +
+                '}';
+    }
+}
